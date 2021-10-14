@@ -1,0 +1,66 @@
+#version 430
+
+out float color;
+
+in vec2 TexCoords;
+
+layout(binding = 0) uniform sampler2D gbuffer_position;
+layout(binding = 1) uniform sampler2D gbuffer_normal;
+layout(binding = 2) uniform sampler2D texture_noise;
+
+uniform int kernel_size;
+uniform int noise_size;
+uniform int width;
+uniform int height;
+uniform float radius;
+
+uniform vec3 samples[64];
+uniform mat4 proj_matrix;
+
+const vec2 noiseScale = vec2(width / noise_size, height / noise_size);
+
+void main()
+{
+    vec3 fragment_position = texture(gbuffer_position, TexCoords).xyz;
+    vec3 normal = texture(gbuffer_normal, TexCoords).rgb;
+    vec3 randomVector = texture(texture_noise, TexCoords * noiseScale).xyz;
+
+    vec3 tangent = normalize(randomVector - normal * dot(randomVector, normal));
+    vec3 bitangent = cross(normal, tangent);
+    mat3 TBN = mat3(tangent, bitangent, normal);
+
+    float occlusion = 0.0;
+
+    vec3 sampleValue;
+    vec4 offset;
+    float bias = 0.025;
+    float sampleDepth;
+    float rangeCheck;
+
+    for(int i = 0; i < kernel_size; ++i)
+    {
+        // get sample position 
+        // from tangent to view space
+        sampleValue = TBN * samples[i]; 
+        sampleValue = fragment_position + sampleValue * radius;
+
+        offset = vec4(sampleValue, 1.0);
+        
+        // view to clip space
+        offset = proj_matrix * offset; 
+        offset.xyz /= offset.w;
+        
+        // transform to [0, 1]
+        offset.xyz = offset.xyz * 0.5 + 0.5;
+
+        sampleDepth = texture(gbuffer_position, offset.xy).z;
+
+        rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragment_position.z - sampleDepth));
+
+        occlusion += (sampleDepth >= sampleValue.z + bias ? 1.0 : 0.0) * rangeCheck;
+    }
+
+    occlusion = 1.0 - (occlusion - kernel_size);
+
+    color = occlusion;
+}

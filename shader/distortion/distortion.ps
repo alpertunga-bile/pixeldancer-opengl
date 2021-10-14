@@ -1,0 +1,44 @@
+#version 430
+
+out vec4 color;
+
+in vec2 TexCoords;
+
+uniform float time;
+
+layout(binding = 0) uniform sampler2D wood;
+layout(binding = 1) uniform sampler2D distortion;
+
+void main()
+{
+    // First Noise Texturing
+    vec2 change = vec2(0.21, 0.4);
+
+    change = vec2(change.x * time, change.y * time);
+
+    vec2 newNoiseTexCoords = change + TexCoords;
+
+    vec2 noiseRG = texture(distortion, newNoiseTexCoords).rg;
+
+    // Second Noise Texturing
+
+    change = vec2(0.34, 0.23);
+
+    change = vec2(change.x * time, change.y * time);
+
+    newNoiseTexCoords = change + TexCoords;
+
+    vec2 noiseRB = texture(distortion, newNoiseTexCoords).rb;
+
+    vec2 addedNoiseTexCoords = noiseRG + noiseRB;
+
+    // Add Noise
+
+    addedNoiseTexCoords = vec2(addedNoiseTexCoords.x * 0.02, addedNoiseTexCoords.y * 0.02);
+
+    vec2 newTexCoord = TexCoords + addedNoiseTexCoords;
+
+    vec3 woodTexColor = texture(wood, newTexCoord).rgb;
+
+    color = vec4(woodTexColor, 1.0);
+}

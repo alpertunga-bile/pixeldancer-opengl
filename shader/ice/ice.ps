@@ -1,0 +1,58 @@
+#version 430
+
+out vec4 color;
+
+in vec3 FragmentPosition;
+in vec2 TexCoords;
+in vec3 TangentLightPos;
+in vec3 TangentViewPos;
+in vec3 TangentFragPos;
+
+struct Light
+{
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+    vec3 position;
+};
+
+uniform Light light;
+uniform vec3 cameraPos;
+
+layout(binding = 3) uniform sampler2D ice;
+layout(binding = 4) uniform sampler2D ice_normal;
+
+void main()
+{
+    // decleare ADS Lighting variables
+    vec3 lightDir = normalize(TangentLightPos - FragmentPosition);
+    vec3 viewDir = normalize(TangentViewPos - FragmentPosition);
+
+    vec3 normal = texture(ice_normal, TexCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0);
+
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+
+    // begin ice effect
+    float effectRatio = (texture(ice, TexCoords)).r * 50.0;
+
+    vec3 reflected = reflect(TangentViewPos, normal);
+
+    float effectPower = effectRatio / (abs(reflected.z));
+    float strideTexture = 1.0 / 512.0;
+
+    vec2 newReflected = reflected.rg * effectPower * strideTexture;
+
+    vec2 newTexCoords = newReflected + TexCoords;
+
+    vec3 iceColor = texture(ice, newTexCoords).rgb;
+
+    // Adding ADS Lighting
+    vec3 ambient = 0.3 * light.ambient.rgb * iceColor;
+
+    vec3 diffuse = light.diffuse.rgb * iceColor * max(dot(lightDir, normal), 0.0);
+
+    vec3 specular = 0.2 * light.specular.rgb * pow(max(dot(normal, halfwayDir), 0.0), 12.0);
+
+    color = vec4((ambient + diffuse + specular), 1.0);
+}

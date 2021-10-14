@@ -1,0 +1,12 @@
+#version 430
+
+out vec4 color;
+
+in vec2 TexCoords;
+
+layout(binding = 0) uniform sampler2D texture_framebuffer;
+
+void main()
+{
+    color = texture(texture_framebuffer, TexCoords);
+}

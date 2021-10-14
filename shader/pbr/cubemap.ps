@@ -1,0 +1,17 @@
+#version 430
+
+out vec4 color;
+
+in vec3 WorldPos;
+
+layout(binding = 0) uniform samplerCube envCubemap;
+
+void main()
+{
+    vec3 cubeColor = texture(envCubemap, WorldPos).rgb;
+
+    cubeColor = cubeColor / (cubeColor + vec3(1.0));
+    cubeColor = pow(cubeColor, vec3(1.0 / 2.2));
+
+    color = vec4(cubeColor, 1.0);
+}

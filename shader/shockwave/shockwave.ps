@@ -1,0 +1,69 @@
+#version 430
+
+out vec4 color;
+
+in vec3 _position;
+in vec3 _normal;
+in vec2 _texCoords;
+
+layout(binding = 0) uniform sampler2D distortTexture;
+
+uniform vec3 viewPos;
+uniform vec3 lightPos;
+uniform vec3 shockColor;
+
+uniform float offset;
+uniform float distort;
+uniform float time;
+
+uniform float emissiveBooster;
+uniform float edgeBoost;
+
+void main()
+{
+    ////////////////////////////////////////////////////////////////////////
+    // VARIABLES
+    ////////////////////////////////////////////////////////////////////////
+    
+    vec3 normal = normalize(_normal);
+    vec3 lightDir = normalize(lightPos - _position);
+    vec3 viewDir = normalize(viewPos - _position);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+
+    vec3 objectColor = vec3(0.1);
+    vec3 lightColor = vec3(0.5);
+
+    ////////////////////////////////////////////////////////////////////////
+    // SHOCKWAVE
+    ////////////////////////////////////////////////////////////////////////
+
+    vec2 distortTexCoords = _texCoords * vec2(2.3, 1.0);
+    distortTexCoords = distortTexCoords * vec2(time);
+
+    float distortR = texture(distortTexture, distortTexCoords).r;
+    distortR = distortR * distort;
+
+    vec2 TexCoords = _texCoords + vec2(distortR);
+
+    float g_texcoord = TexCoords.g + offset;
+    float Step = step(g_texcoord, 1 - offset);
+    float emis = pow(g_texcoord, 7);
+    float emissive = Step * emis;
+    emissive = pow(emissive, emissiveBooster);
+
+    float edgeBooster = pow(emissive, 1.0f) * edgeBoost;
+
+    vec3 emissiveVec = vec3(edgeBooster + Step * emis) * shockColor;
+
+    ////////////////////////////////////////////////////////////////////////
+    // ADS
+    ////////////////////////////////////////////////////////////////////////
+
+    vec3 ambient = vec3(0.15) * objectColor;
+    vec3 diffuse = vec3(0.0);
+    vec3 specular = vec3(0.0);
+
+    vec3 ADS = emissiveVec + ambient + diffuse + specular;
+
+    color = vec4(ADS, emis * Step);
+}

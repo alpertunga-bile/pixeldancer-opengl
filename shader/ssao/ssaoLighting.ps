@@ -1,0 +1,50 @@
+#version 430
+
+out vec4 color;
+
+in vec2 TexCoords;
+
+layout(binding = 0) uniform sampler2D gbuffer_position;
+layout(binding = 1) uniform sampler2D gbuffer_normal;
+layout(binding = 2) uniform sampler2D gbuffer_color;
+layout(binding = 3) uniform sampler2D ssao;
+
+uniform vec3 lightPosition;
+
+void main()
+{
+    vec3 lightColor = vec3(0.9, 0.8, 0.9);
+    float linear = 0.09;
+    float quadratic = 0.032;
+
+    vec3 fragment_position = texture(gbuffer_position, TexCoords).rgb;
+    vec3 normal = texture(gbuffer_normal, TexCoords).rgb;
+    vec3 diffuse = texture(gbuffer_color, TexCoords).rgb;
+    float AO = texture(ssao, TexCoords).r;
+
+    vec3 ambient = vec3(0.3 * diffuse * AO);
+
+    vec3 lighting = ambient;
+
+    vec3 viewDir = normalize(-fragment_position);
+
+    // diffuse
+    vec3 lightDir = normalize(lightPosition - fragment_position);
+    vec3 Diffuse = max(dot(normal, lightDir), 0.0) * diffuse * lightColor;
+
+    // specular
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), 8.0);
+    vec3 specular = lightColor * spec;
+
+    // attenuation
+    float distance = length(lightPosition - fragment_position);
+    float attenuation = 1.0 / (1.0 + linear * distance + quadratic * distance * distance);
+    
+    Diffuse *= attenuation;
+    specular *= attenuation;
+    
+    lighting += Diffuse + specular;
+
+    color = vec4(lighting, 1.0);
+}

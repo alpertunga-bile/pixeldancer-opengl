@@ -1,0 +1,179 @@
+#version 430
+
+out vec4 color;
+
+in vec2 TexCoords;
+in vec3 WorldPos;
+in vec3 Normal;
+
+uniform vec3 cameraPos;
+uniform vec3 lightPositions[4];
+uniform vec3 lightColors[4];
+
+layout(binding = 0) uniform sampler2D texture_albedo;
+layout(binding = 1) uniform sampler2D texture_normalMap;
+layout(binding = 2) uniform sampler2D texture_metallic;
+layout(binding = 3) uniform sampler2D texture_roughness;
+layout(binding = 4) uniform sampler2D texture_ao;
+layout(binding = 5) uniform samplerCube texture_irradiance;
+layout(binding = 6) uniform samplerCube texture_prefilter;
+layout(binding = 7) uniform sampler2D texture_lut;
+
+const float PI = 3.14159265359;
+
+vec3 getNormal()
+{
+    vec3 tangentNormal = texture(texture_normalMap, TexCoords).xyz * 2.0 - 1.0;
+
+    vec3 Q1 = dFdx(WorldPos);
+    vec3 Q2 = dFdy(WorldPos);
+    vec2 st1 = dFdx(TexCoords);
+    vec2 st2 = dFdy(TexCoords);
+
+    vec3 N = normalize(Normal);
+    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
+    vec3 B = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float powerA = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float powerNdotH = NdotH * NdotH;
+
+    float dividend = powerA;
+    float divisor = (powerNdotH * (powerA - 1.0) + 1.0);
+    divisor = PI * divisor * divisor;
+
+    return dividend / divisor;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float dividend = NdotV;
+    float divisor = NdotV * (1.0 - k) + k;
+
+    return dividend / divisor;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+
+    return ggx1 * ggx2;
+}
+
+void main()
+{
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // VARIABLES
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    vec3 albedo = pow(texture(texture_albedo, TexCoords).rgb, vec3(2.2));
+    vec3 normal = getNormal();
+    float metallic = texture(texture_metallic, TexCoords).r;
+    float roughness = texture(texture_roughness, TexCoords).r;
+    float ao = texture(texture_ao, TexCoords).r;
+
+    vec3 view = normalize(cameraPos - WorldPos);
+
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, albedo, metallic);
+
+    vec3 lightDir, halfway, radiance, F, numerator, specular, kS, kD;
+    float distance, attenuation, ND, G, denominator, NdotL;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // CALCULATE RADIANCE
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    vec3 Lo = vec3(0.0);
+    for(int i = 0; i < 4; ++i)
+    {
+        lightDir = normalize(lightPositions[i] - WorldPos);
+        halfway = normalize(view + lightDir);
+
+        distance = length(lightPositions[i] - WorldPos);
+        attenuation = 1.0 / (distance * distance);
+        radiance = lightColors[i] * attenuation;
+
+        // calculate reflect ratio
+        ND = DistributionGGX(normal, halfway, roughness);
+        G = GeometrySmith(normal, view, lightDir, roughness);
+        F = fresnelSchlick(max(dot(halfway, view), 0.0), F0);
+
+        numerator = ND * G * F;
+        denominator = 4.0 * max(dot(normal, view), 0.0) * max(dot(normal, lightDir), 0.0);
+        specular = numerator / denominator, 0.001);
+
+        kS = F;
+        kD = vec3(1.0) - kS;
+
+        kD *= 1.0 - metallic;
+
+        NdotL = max(dot(normal, lightDir), 0.0);
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    kS = fresnelSchlickRoughness(max(dot(normal, view), 0.0), F0, roughness);
+    kD = 1.0 - kS;
+    kD *= 1.0 - metallic;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // DIFFUSE PART
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    vec3 irradiance = texture(texture_irradiance, normal).rgb;
+    vec3 diffuse = irradiance * albedo;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // SPECULAR PART
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    vec3 R = reflect(-view, normal);
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(texture_prefilter, R, roughness * MAX_REFLECTION_LOD).rgb;
+
+    vec2 envBRDF = texture(texture_lut, vec2(max(dot(normal, view), 0.0), roughness)).rg;
+    specular = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // ADDITION
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    vec3 ambient = (kD * diffuse + specular) * ao;
+    vec3 tempColor = ambient + Lo;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // COLOR CORRECTIONS
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    // HDR tone mapping
+    tempColor = tempColor / (tempColor + vec3(1.0));
+    // gamma correction
+    tempColor = pow(tempColor, vec3(1.0 / 2.2));
+
+    color = vec4(tempColor, 1.0);
+}
