@@ -1,6 +1,6 @@
 # PixelDancer-OpenGL
 
-PixelDancer is a project to create libraries for OpenGL, Vulkan and DirectX graphic programming api s. PixelDancer-OpenGL is a library for OpenGL programming api. 
+PixelDancer is a project to create libraries for OpenGL, Vulkan and DirectX graphic programming api s. PixelDancer-OpenGL is a library for OpenGL graphic programming api. 
 
 ## Usage of Examples
 
