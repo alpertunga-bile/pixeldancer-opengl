@@ -17,7 +17,7 @@ DO NOT FORGET TO INCLUDE glad.c FILE TO YOUR PROJECT
 
 ## Usage of Examples
 
-You can use them as main file but for pbr_cerberus.cpp file you have to download cerberus model(You can reach with this http://www.artisaverb.info/PBT.html link.). After you download it create objects file in data file and place model under cerberus filename in objects file.<br/>
+You can use them as main file but for pbr_cerberus.cpp file you have to download cerberus model (You can reach with this http://www.artisaverb.info/PBT.html link.). After you download it create objects file in data file and place model under cerberus filename in objects file.<br/>
 
 Final data file should be like this:
 
