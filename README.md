@@ -1,6 +1,19 @@
 # PixelDancer-OpenGL
 
-PixelDancer is a project to create libraries for OpenGL, Vulkan and DirectX graphic programming api s. PixelDancer-OpenGL is a library for OpenGL graphic programming api. 
+PixelDancer is a project to create libraries for OpenGL, Vulkan and DirectX graphic programming api s. PixelDancer-OpenGL is a library for OpenGL graphic programming api.
+
+## Before Using 
+
+You have to have this packages to be included
+
+- [ ] DearImGui (If you are going to use gui include it. This is optional.)
+- [x] Glad
+- [x] GLM 
+- [x] GLFW
+- [x] assimp
+- [x] Stb-image
+
+DO NOT FORGET TO INCLUDE glad.c FILE TO YOUR PROJECT
 
 ## Usage of Examples
 
@@ -24,6 +37,8 @@ data<br/>
 
 ### Shockwave
 https://user-images.githubusercontent.com/76731692/137397022-b8b27188-2a8c-4060-9ef4-4db291062dd9.mp4
+
+- [x] For more outputs you can look at https://github.com/alpertunga-bile/Showcase repository's OpenGL section.
 
 ## References
 Vries J.(2020). Learn OpenGL: Learn modern OpenGL graphics programming in a step-by-step fashion(1st ed.). Kendall & Welling.<br/>
