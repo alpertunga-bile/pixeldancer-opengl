@@ -6,7 +6,7 @@ PixelDancer is a project to create libraries for OpenGL, Vulkan and DirectX grap
 
 You have to have this packages to be included
 
-- [ ] DearImGui (If you are going to use gui include it. This is optional.)
+- [x] DearImGui
 - [x] Glad
 - [x] GLM 
 - [x] GLFW
