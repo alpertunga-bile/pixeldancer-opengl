@@ -59,7 +59,7 @@ namespace pixeldancer
 
 			SHOWYELLOW("Initializing PBR");
 
-			unsigned int hdrMap = pixeldancer::loadHDR("data/textures/hdr/newport_loft.hdr");
+			unsigned int hdrMap = pixeldancer::loadHDR(texture_hdr);
 			ShapeFactory factory;
 
 			glGenFramebuffers(1, &framebuffer_capture);
