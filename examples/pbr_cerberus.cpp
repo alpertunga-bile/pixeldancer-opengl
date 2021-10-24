@@ -124,7 +124,6 @@ int main()
 	}
 
 	app.cleanup();
-	factory.cleanup();
 	exit(EXIT_SUCCESS);
 }
 
