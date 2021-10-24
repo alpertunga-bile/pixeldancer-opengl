@@ -30,7 +30,7 @@ data<br/>
 
 <br/>After the steps you can use pbr_cerberus.cpp file as main file. <br/>
 
-When using pbr_cerberus and shadow examples you have to comment 160, 161 and 162 lines in window.h file. If you are going to use DearImGui in your projects you have to uncomment them. (Shockwave example uses DearImGui.)
+When using pbr_cerberus and shadow examples you have to comment 160, 161 and 162 lines in window.h file. If you are going to use DearImGui in your projects you have to uncomment them. (Shockwave example is using DearImGui.)
 
 ## Some Output of Examples
 
