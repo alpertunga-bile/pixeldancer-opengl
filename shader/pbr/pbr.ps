@@ -124,8 +124,8 @@ void main()
         F = fresnelSchlick(max(dot(halfway, view), 0.0), F0);
 
         numerator = ND * G * F;
-        denominator = 4.0 * max(dot(normal, view), 0.0) * max(dot(normal, lightDir), 0.0);
-        specular = numerator / denominator, 0.001);
+        denominator = 4.0 * max(dot(normal, view), 0.0) * max(dot(normal, lightDir), 0.0) + 0.001;
+        specular = numerator / denominator;
 
         kS = F;
         kD = vec3(1.0) - kS;
