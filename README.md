@@ -28,7 +28,9 @@ data<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|----->Textures<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|----->Cerberus_LP.fbx<br/>
 
-<br/>After the steps you can use pbr_cerberus.cpp file as main file.
+<br/>After the steps you can use pbr_cerberus.cpp file as main file. <br/>
+
+When using pbr_cerberus and shadow examples you have to comment 160, 161 and 162 lines in window.h file. If you are going to use DearImGui in your projects you have to uncomment them.
 
 ## Some Output of Examples
 
