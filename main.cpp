@@ -25,10 +25,6 @@ int main()
 	pixeldancer::ShapeFactory factory;
 
 	glfwSetFramebufferSizeCallback(app.window, framebuffer_size_callback);
-	// Uncomment them for mouse inputs
-	// glfwSetCursorPosCallback(app.window, mouse_callback);
-	// glfwSetScrollCallback(app.window, scroll_callback);
-
 	glEnable(GL_DEPTH_TEST);
 
 	int width, height;
@@ -37,19 +33,39 @@ int main()
 	glViewport(0, 0, width, height);
 
 	app.guiInit();
+	
+	bool isRendering = true;
 
 	while (!glfwWindowShouldClose(app.window))
 	{
 		cam.activateTimer();
 
-		app.executeInput(cam);
+		// GUI 
 
+		if (isRendering)
+		{
+			app.executeInput(cam);
+
+			glfwSetCursorPosCallback(app.window, mouse_callback);
+			glfwSetScrollCallback(app.window, scroll_callback);
+			glfwSetInputMode(app.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+
+		if (glfwGetKey(app.window, GLFW_KEY_R) == GLFW_PRESS)
+		{
+			isRendering = !isRendering;
+
+			glfwSetCursorPosCallback(app.window, NULL);
+			glfwSetScrollCallback(app.window, NULL);
+			glfwSetInputMode(app.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+
+		app.guiFrame();
+		
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		app.guiFrame();
-
-		// opengl codes here
+		// OpenGL
 
 		// this is for rendering GUI
 		glUseProgram(0);
